@@ -1,0 +1,23 @@
+<mat-toolbar color="primary">
+    <mat-toolbar-row fxLayout="row">
+        <span>View Bill</span>
+        <span class="spacer"></span>
+        <button class="mat-dialog-close" mat-icon-button mat-dialog-close>
+            <mat-icon>cancel</mat-icon>
+        </button>
+    </mat-toolbar-row>
+</mat-toolbar>
+
+<mat-dialog-content class="mat-typography">
+    <table id="customers">
+        <tr>
+            <td><b>Name: </b> {{data?.name}}</td>
+            <td><b>Email: </b> {{data?.email}}</td>
+        </tr>
+
+        <tr>
+            <td><b>ContactNumber: </b> {{data?.contactNumber}}</td>
+            <td><b>Payment Method: </b> {{data?.paymentMethod}}</td>
+        </tr>
+    </table>
+</mat-dialog-content>

@@ -29,6 +29,7 @@ import { ChangePasswordComponent } from './material-component/dialog/change-pass
 import { ConfirmationComponent } from './material-component/dialog/confirmation/confirmation.component';
 import { CategoryComponent } from './material-component/dialog/category/category.component';
 import { ProductComponent } from './material-component/dialog/product/product.component';
+import { ViewBillProductsComponent } from './material-component/dialog/view-bill-products/view-bill-products.component';
 
 // ✅ REMOVED: ConfirmationComponent import has been removed from here
 
@@ -75,6 +76,6 @@ const ngxUiLoaderConfig: NgxUiLoaderConfig = {
   bootstrap: [AppComponent],
   entryComponents: [SignupComponent, ForgotPasswordComponent, LoginComponent, DashboardComponent,
      AppHeaderComponent, ConfirmationComponent, ChangePasswordComponent,
-    CategoryComponent,ProductComponent] // ✅ Added ConfirmationComponent and ChangePasswordComponent to entryComponents
+    CategoryComponent,ProductComponent,ViewBillProductsComponent] // ✅ Added ConfirmationComponent and ChangePasswordComponent to entryComponents
 })
 export class AppModule { }
