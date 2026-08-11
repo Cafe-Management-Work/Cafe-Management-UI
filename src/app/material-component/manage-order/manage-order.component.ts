@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NgxUiLoaderService } from 'ngx-ui-loader';
+import { BillGenerateRequest } from 'src/app/models/bill';
 import { BillService } from 'src/app/services/bill.service';
 import { CategoryService } from 'src/app/services/category.service';
 import { ProductService } from 'src/app/services/product.service';
@@ -29,6 +30,7 @@ export class ManageOrderComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    console.log(this.categorys);
     this.ngxService.start();
     this.getCategorys();
     this.manageOrderForm = this.formBuilder.group({
@@ -48,6 +50,7 @@ export class ManageOrderComponent implements OnInit {
 
     this.categoryService.getAllCategory('true').subscribe((response: any) => {
       this.ngxService.stop();
+      this.categorys = response;
       this.responseMessage = response;
 
     }, (error: any) => {
@@ -151,26 +154,77 @@ export class ManageOrderComponent implements OnInit {
   }
 
   handleDeleteAction(index: number, element: any): void {
-  this.totalAmount -= element.total;
-  this.dataSource.splice(index, 1);
-  this.dataSource = [...this.dataSource]; // Reassign to trigger UI change detection
-}
+    this.totalAmount -= element.total;
+    this.dataSource.splice(index, 1);
+    this.dataSource = [...this.dataSource]; // Reassign to trigger UI change detection
+  }
 
-submitAction(): void {
+  submitAction(): void {
   this.ngxService.start();
 
   const formData = this.manageOrderForm.value;
-  const data = {
+  const data: BillGenerateRequest = {
     name: formData.name,
     email: formData.email,
     contactNumber: formData.contactNumber,
     paymentMethod: formData.paymentMethod,
-    totalAmount: this.totalAmount.toString(),
+    total: this.totalAmount.toString(),
+    isGenerate: true,
     productDetails: JSON.stringify(this.dataSource)
   };
 
-  // Call your backend API service here
-  // e.g., this.orderService.generateReport(data).subscribe(...)
+  this.billService.generateReport(data).subscribe({
+    next: (response: any) => {
+      // Clean quotes/whitespace if the string response came with extra formatting
+      const uuid = typeof response === 'string' ? response.replace(/"/g, '').trim() : response?.uuid;
+
+      if (uuid) {
+        this.downloadFile(uuid); // Pass the valid string UUID
+      } else {
+        this.ngxService.stop();
+        this.snackBarService.opensnackbar("Failed to generate bill UUID", GlobalConstants.error);
+      }
+
+      this.manageOrderForm.reset();
+      this.dataSource = [];
+      this.totalAmount = 0;
+    },
+    error: (error: any) => {
+      this.ngxService.stop();
+      console.error(error);
+      if (error.error?.message) {
+        this.responseMessage = error.error?.message;
+      } else {
+        this.responseMessage = GlobalConstants.genericError;
+      }
+      this.snackBarService.opensnackbar(this.responseMessage, GlobalConstants.error);
+    }
+  });
+}
+
+ downloadFile(fileName: string) {
+  const data: BillGenerateRequest = {
+    uuid: fileName
+  };
+
+  this.billService.getPdf(data).subscribe((response: any) => {
+    // Create a Blob from the PDF response
+    const blob = new Blob([response], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Create an invisible link element and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${fileName}.pdf`;
+    link.click();
+    
+    // Clean up memory
+    window.URL.revokeObjectURL(url);
+    this.ngxService.stop();
+  }, (error) => {
+    this.ngxService.stop();
+    console.error('Error downloading file:', error);
+  });
 }
 
 

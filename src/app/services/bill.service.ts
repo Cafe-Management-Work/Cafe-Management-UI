@@ -24,4 +24,8 @@ export class BillService {
   getBills():Observable<Bill>{
     return this.http.get<Bill>(`${this.url}/getBill`)
   }
+
+  delete(id:number){
+    return this.http.post(`${this.url}/delete/${id}`, {}, { responseType: 'text' })
+  }
 }
