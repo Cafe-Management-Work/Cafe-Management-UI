@@ -7,6 +7,9 @@ import { BillService } from 'src/app/services/bill.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { GlobalConstants } from 'src/app/shared/global-constants';
 import { ViewBillProductsComponent } from '../dialog/view-bill-products/view-bill-products.component';
+import { ConfirmationComponent } from '../dialog/confirmation/confirmation.component';
+import { BillGenerateRequest } from 'src/app/models/bill';
+import { saveAs } from 'file-saver';
 
 @Component({
   selector: 'app-view-bill',
@@ -14,7 +17,7 @@ import { ViewBillProductsComponent } from '../dialog/view-bill-products/view-bil
   styleUrls: ['./view-bill.component.scss']
 })
 export class ViewBillComponent implements OnInit {
-  displayedColumns: string[] = ['name', 'email', 'contactNumber', 'paymentMethod', 'total','view'];
+  displayedColumns: string[] = ['name', 'email', 'contactNumber', 'paymentMethod', 'total', 'view'];
   dataSource: any;
   responseMessage: any;
 
@@ -31,20 +34,20 @@ export class ViewBillComponent implements OnInit {
     this.tableData();
   }
 
-  tableData(){
+  tableData() {
     this.billService.getBills().subscribe((response: any) => {
       console.log(response);
       this.ngxService.stop();
       this.dataSource = new MatTableDataSource(response);
     }, (error) => {
       this.ngxService.stop();
-            console.log(error);
-            if (error.error?.message) {
-              this.responseMessage = error.error?.message;
-            } else {
-              this.responseMessage = GlobalConstants.genericError;
-            }
-            this.snackbarService.opensnackbar(this.responseMessage, GlobalConstants.error);
+      console.log(error);
+      if (error.error?.message) {
+        this.responseMessage = error.error?.message;
+      } else {
+        this.responseMessage = GlobalConstants.genericError;
+      }
+      this.snackbarService.opensnackbar(this.responseMessage, GlobalConstants.error);
     })
   }
 
@@ -53,20 +56,86 @@ export class ViewBillComponent implements OnInit {
     this.dataSource.filter = filterValue.trim().toLowerCase();
   }
 
-  handleViewAction(values: any){
+  handleViewAction(values: any) {
     const dialogConfig = new MatDialogConfig();
     dialogConfig.data = {
       data: values
     }
     dialogConfig.width = "100%";
-    const dialogRef = this.dialog.open(ViewBillProductsComponent,dialogConfig);
+    const dialogRef = this.dialog.open(ViewBillProductsComponent, dialogConfig);
     this.router.events.subscribe(() => {
       dialogRef.close();
     })
   }
 
-  handleDeleteAction(values: any){}
+  handleDeleteAction(values: any) {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.data = {
+      message: 'delete ' + values.name + ' bill',
+      confirmation: true
+    };
+    const dialogRef = this.dialog.open(ConfirmationComponent, dialogConfig);
+    const sub = dialogRef.componentInstance.onEmitStatusChange.subscribe((response) => {
+      this.ngxService.start();
+      this.deleteBill(values.id)
+      dialogRef.close();
+    })
+  }
 
-  downloadReportAction(values: any){}
+  deleteBill(id: any) {
+    this.billService.delete(id).subscribe((response: any) => {
+      this.ngxService.stop();
+      this.tableData();
+      this.responseMessage = response;
+      this.snackbarService.opensnackbar(this.responseMessage, "success");
+    }, (error) => {
+      this.ngxService.stop();
+      if (error.error?.message) {
+        this.responseMessage = error.error?.message;
+      } else {
+        this.responseMessage = GlobalConstants.genericError;
+      }
+      this.snackbarService.opensnackbar(this.responseMessage, GlobalConstants.error);
+    })
+  }
 
+ downloadReportAction(values: any) {
+  this.ngxService.start();
+  var data: any = {
+    name: values.name,
+    email: values.email,
+    uuid: values.uuid,
+    contactNumber: values.contactNumber,
+    paymentMethod: values.paymentMethod,
+    total: values.total ? values.total.toString() : values.totalAmount?.toString(),
+    productDetails: values.productDetails || values.productDetail
+  };
+  this.downloadFile(values.uuid, data);
+}
+
+downloadFile(fileName: string, data: any) {
+  this.billService.getPdf(data).subscribe(
+    (response: any) => {
+      saveAs(response, fileName + '.pdf');
+      this.ngxService.stop();
+    },
+    (error: any) => {
+      this.ngxService.stop();
+      
+      // Since responseType is 'blob', read the actual backend error message from Blob
+      if (error.error instanceof Blob) {
+        error.error.text().then((text: string) => {
+          try {
+            const errObj = JSON.parse(text);
+            this.snackbarService.opensnackbar(errObj.message || GlobalConstants.genericError, GlobalConstants.error);
+          } catch {
+            this.snackbarService.opensnackbar(text || GlobalConstants.genericError, GlobalConstants.error);
+          }
+        });
+      } else {
+        this.snackbarService.opensnackbar(GlobalConstants.genericError, GlobalConstants.error);
+      }
+    }
+  );
+}
 }
