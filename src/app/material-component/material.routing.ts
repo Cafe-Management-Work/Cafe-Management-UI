@@ -4,6 +4,7 @@ import { RouteGaurdService } from '../services/route-gaurd.service';
 import { ManageProductComponent } from './manage-product/manage-product.component';
 import { ManageOrderComponent } from './manage-order/manage-order.component';
 import { ViewBillComponent } from './view-bill/view-bill.component';
+import { ManageUserComponent } from './manage-user/manage-user.component';
 
 
 export const MaterialRoutes: Routes = [
@@ -28,7 +29,7 @@ export const MaterialRoutes: Routes = [
         component: ManageOrderComponent,
         canActivate: [RouteGaurdService],
         data: {
-            expectedRole: ['admin','user']
+            expectedRole: ['admin', 'user']
         }
     }
     ,
@@ -37,7 +38,15 @@ export const MaterialRoutes: Routes = [
         component: ViewBillComponent,
         canActivate: [RouteGaurdService],
         data: {
-            expectedRole: ['admin','user']
+            expectedRole: ['admin', 'user']
+        }
+    },
+    {
+        path: 'user',
+        component: ManageUserComponent,
+        canActivate: [RouteGaurdService],
+        data: {
+            expectedRole: ['admin']
         }
     }
 ];

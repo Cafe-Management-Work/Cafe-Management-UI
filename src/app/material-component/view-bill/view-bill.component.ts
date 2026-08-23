@@ -99,7 +99,7 @@ export class ViewBillComponent implements OnInit {
     })
   }
 
- downloadReportAction(values: any) {
+downloadReportAction(values: any) {
   this.ngxService.start();
   var data: any = {
     name: values.name,
@@ -107,13 +107,15 @@ export class ViewBillComponent implements OnInit {
     uuid: values.uuid,
     contactNumber: values.contactNumber,
     paymentMethod: values.paymentMethod,
-    total: values.total ? values.total.toString() : values.totalAmount?.toString(),
-    productDetails: values.productDetails || values.productDetail
+    total: values.total ? values.total.toString() : '',
+    totalAmount: values.total ? values.total.toString() : values.totalAmount?.toString(),
+    productDetails: values.productDetails || values.productDetail, // Fixes undefined payload
+    isGenerate: false
   };
   this.downloadFile(values.uuid, data);
 }
 
-downloadFile(fileName: string, data: any) {
+downloadFile(fileName: string, data: BillGenerateRequest) {
   this.billService.getPdf(data).subscribe(
     (response: any) => {
       saveAs(response, fileName + '.pdf');
