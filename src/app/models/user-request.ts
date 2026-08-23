@@ -5,3 +5,8 @@ export interface UserRequest {
   password: string;      // Mandatory (min 6 chars in Java)
   role: string;          // Changed from roles (array) to role (string)
 }
+
+export interface StatusUpdateRequest{
+  id: number;            
+  status: string;        
+}
